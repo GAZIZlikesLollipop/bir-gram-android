@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<resources>
+    <string name="app_name">BirGram</string>
+    <string-array name="login_cnt">
+        <item>A fast, minimalist, and secure Telegram client.</item>
+        <item>Getting start!</item>
+        <item>or login with QR-code</item>
+        <!--3-->
+        <item>Your phone number</item>
+        <item>Phone number</item>
+        <item>Please enter your phone number</item>
+        <!--6-->
+        <item>is this the correct phone number?</item>
+        <item>Edit</item>
+        <item>Yes</item>
+
+        <!--9-->
+        <item>No</item>
+        <item>Are you sure you want to start over?</item>
+
+        <!--11-->
+        <item>Verification code</item>
+        <item>Enter Code</item>
+        <item>Your password</item>
+        <item>Two-Step Verification enabled. Your account is protected with an additional password</item>
+        <item>Enter password</item>
+        <item>Forgot password?</item>
+
+        <!--17-->
+        <item>Sorry</item>
+        <item>Since you didn\'t provide a recovery email when setting up your password, your remaining options are either to remember your password or wait 7 days until your password is reset.</item>
+        <item>Reset account</item>
+        <item>Cancel</item>
+
+        <!--21-->
+        <item>Warning!</item>
+        <item>This action can\'t be undone. You will lose all your Telegram chats, messages, media and files if you proceed with resetting your account.</item>
+
+        <!--23-->
+        <item>Recovery code</item>
+        <item>We\'ve sent a recovery code to the recovery email:</item>
+        <item>Continue</item>
+
+        <!--26-->
+        <item>Your email</item>
+        <item>Please enter your email to increase your account security</item>
+        <item>Email</item>
+
+        <!--29-->
+        <item>Check Your Email</item>
+        <item>Please enter the code sent to your email</item>
+        <item>Email code</item>
+        <item>Can\'t access the email?</item>
+        <!--33-->
+        <item>Reset Email</item>
+        <item>You can change your login email if you are logged into Telegram from another device. Otherwise, if you don\'t have access to email</item>
+        <item>, you can reset this email with an SMS code in 7 days</item>
+        <item>Reset email</item>
+
+        <!--37-->
+        <item>Email will be reset in </item>
+        <item>days</item>
+        <item>Telegram Premium Required</item>
+        <item>Due to high cost of SMS in your country, you need a Telegram Premium account to immediately reset this email via an SMS code.</item>
+        <item>Send code via SMS</item>
+        <!--42-->
+        <item>Profile info</item>
+        <item>Enter your name and add a profile photo</item>
+        <item>First name</item>
+        <item>Last name</item>
+        <item>By signing up, you agree to the</item>
+        <item>Terms of Service.</item>
+        <!--48-->
+        <item>Terms of Service</item>
+    </string-array>
+
+    <string-array name="code_type">
+        <item>A verification code was sent to you in Telegram. Check your messages on another device. The message will come from Telegram.</item>
+        <item>We sent a verification code via SMS to your phone number.</item>
+        <item>We will call you and read out a verification code. Please listen carefully.</item>
+        <item>You will receive a short incoming call. Please don’t answer it — the code will be detected automatically. If the code wasn’t detected automatically, enter the last digits of the incoming phone number.</item>
+        <item>You will receive a short incoming call. Enter the last digits of the caller’s phone number.</item>
+        <item>To continue, open the verification link we’ve sent to you. After opening the link, return to this app.</item>
+        <item>Verification is happening automatically. Please wait… No code entry is required.</item>
+        <item>Verification is happening automatically. Please wait… No code entry is required.</item>
+        <item>A verification code will be sent shortly. Please wait…</item>
+    </string-array>
+    <string-array name="next_type">
+        <item>A verification code was sent to you in Telegram. Check your messages on another device. The message will come from Telegram.</item>
+        <item>We sent a verification code via SMS to your phone number.</item>
+        <item>We will call you and read out a verification code. Please listen carefully.</item>
+        <item>You will receive a short incoming call. Please don’t answer it — the code will be detected automatically. If the code wasn’t detected automatically, enter the last digits of the incoming phone number.</item>
+        <item>You will receive a short incoming call. Enter the last digits of the caller’s phone number.</item>
+        <item>To continue, open the verification link we’ve sent to you. After opening the link, return to this app.</item>
+        <item>Verification is happening automatically. Please wait… No code entry is required.</item>
+        <item>Verification is happening automatically. Please wait… No code entry is required.</item>
+        <item>A verification code will be sent shortly. Please wait…</item>
+    </string-array>
+    <string-array name="next_type_waiting">
+        <item>Resend via Telegram in </item>       <!-- TelegramMessage -->
+        <item>Resend via SMS in </item>            <!-- SMS -->
+        <item>Receive call in </item>              <!-- Call -->
+        <item>Waiting for FlashCall in </item>    <!-- FlashCall -->
+        <item>Waiting for Missed Call in </item>  <!-- MissedCall -->
+        <item>Open link in </item>                <!-- Fragment -->
+        <item>Automatic verification in </item>   <!-- FirebaseAndroid -->
+        <item>Automatic verification in </item>   <!-- FirebaseIos -->
+        <item>Resend code in </item>
+    </string-array>
+
+    <string-array name="next_type_ready">
+        <item>Resend via Telegram</item>       <!-- TelegramMessage -->
+        <item>Resend via SMS</item>            <!-- SMS -->
+        <item>Receive call</item>              <!-- Call -->
+        <item>Start FlashCall</item>           <!-- FlashCall -->
+        <item>Start Missed Call</item>         <!-- MissedCall -->
+        <item>Open verification link</item>    <!-- Fragment -->
+        <item>Retry automatic verification</item> <!-- FirebaseAndroid -->
+        <item>Retry automatic verification</item>
+        <item>Resend code</item>
+    </string-array>
+</resources>
