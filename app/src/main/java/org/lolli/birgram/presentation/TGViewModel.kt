@@ -1,15 +1,18 @@
 package org.lolli.birgram.presentation
 
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.drinkless.tdlib.TdApi
 import org.lolli.birgram.Route
@@ -21,6 +24,10 @@ sealed class ApiState {
     object Init: ApiState()
     object Loading: ApiState()
     data class Error(val message: String): ApiState()
+}
+
+sealed class DownloadType {
+    data class ChatPhoto(val chatKey: Long): DownloadType()
 }
 
 class TGViewModel(
@@ -41,7 +48,7 @@ class TGViewModel(
     val initialRoute = userPreferencesRepository.initialRoute.stateIn(
         viewModelScope,
         SharingStarted.Eagerly,
-        Route.Auth.route
+        Route.Default.route
     )
 
     private val _authHistory = MutableStateFlow<List<TdApi.AuthorizationState>>(emptyList())
@@ -50,8 +57,15 @@ class TGViewModel(
     private val _apiState = MutableStateFlow<ApiState>(ApiState.Init)
     val apiState = _apiState.asStateFlow()
 
-//    private val _chats = MutableStateFlow<List<TdApi.Chat>>(emptyList())
-//    val chat = _chats.asStateFlow()
+    private val downloadType = MutableStateFlow<DownloadType>(DownloadType.ChatPhoto(0))
+
+    private val _mainChats = MutableStateFlow<Map<Long, TdApi.Chat>>(emptyMap())
+    val mainChats = _mainChats.asStateFlow()
+
+//    val cacheMessages = mutableStateMapOf<Long,TdApi.Message?>()
+//    val cacheChats = mutableStateMapOf<Long,TdApi.Chat>()
+    val cacheMessages = mutableMapOf<Long,TdApi.Message?>()
+    val cacheChats = mutableMapOf<Long,TdApi.Chat>()
 
     init {
         tdLibRepository.initClient(
@@ -68,8 +82,102 @@ class TGViewModel(
                     _loginState.value = it
                     _apiState.value = ApiState.Init
                 }
+            },
+            { position,chat,lastMessage ->
+                viewModelScope.launch {
+                    when {
+                        chat != null -> {
+                            cacheChats[chat.id] = chat
+                        }
+                        lastMessage != null -> {
+                            cacheMessages[lastMessage.chatId] = lastMessage.lastMessage
+                        }
+                        position != null -> {
+                            if(position.position.list is TdApi.ChatListMain) {
+                                if(cacheChats.containsKey(position.chatId)){
+                                    val chat = cacheChats[position.chatId]!!
+                                    _mainChats.update { map ->
+                                        map + (position.position.order to chat)
+                                    }
+                                    cacheChats.remove(position.chatId)
+                                    if(chat.photo?.small?.local?.canBeDownloaded == true){
+                                        downloadChatPhoto(
+                                            chat.photo?.small?.id ?: 0,
+                                            chat.photo?.small?.local?.downloadOffset ?: 0,
+                                            position.position.order
+                                        )
+                                    }
+                                } else {
+                                    val chat = TdApi.Chat().apply {
+                                        title = ""
+                                        positions = arrayOf(position.position)
+                                    }
+                                    _mainChats.update { map ->
+                                        map + (position.position.order to chat)
+                                    }
+                                }
+                                if(cacheMessages.containsKey(position.chatId)){
+                                    mainChats.value.toList().find { it.second.id == position.chatId }?.let { mainChat ->
+                                        val chat = mainChat.second.apply {
+                                            this.lastMessage = cacheMessages[position.chatId]
+                                        }
+                                        _mainChats.update { map ->
+                                            map + (position.position.order to chat)
+                                        }
+                                        cacheMessages.remove(position.chatId)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            { file ->
+                when(val type = downloadType.value){
+                    is DownloadType.ChatPhoto -> {
+                        if(mainChats.value.containsKey(type.chatKey)){
+                            _mainChats.update {
+                                it + (type.chatKey to mainChats.value[type.chatKey]!!.apply { photo.apply { this?.small = file } })
+                            }
+                        }
+                    }
+                }
             }
         )
+    }
+
+    fun downloadChatPhoto(
+        fileId: Int,
+        offset: Long,
+        chatKey: Long
+    ){
+        _apiState.value = ApiState.Loading
+        downloadType.value = DownloadType.ChatPhoto(chatKey)
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                tdLibRepository.downloadFile(fileId, 32,offset,0,true){_apiState.value = ApiState.Error(it)}
+            } catch(it: Exception){
+                val message = it.message ?: "unknown client exception"
+                _apiState.value = ApiState.Error(message)
+                Log.e("TDLib",message)
+            }
+        }
+    }
+
+    fun loadChats(
+        type: TdApi.ChatList = TdApi.ChatListMain(),
+        limit: Int = 100
+    ){
+        _apiState.value = ApiState.Loading
+        viewModelScope.launch {
+            try {
+                tdLibRepository.loadChats(type,limit){_apiState.value = ApiState.Error(it)}
+            } catch(it: Exception){
+                val message = it.message ?: "unknown client exception"
+                _apiState.value = ApiState.Error(message)
+                Log.e("TDLib",message)
+            }
+        }
     }
 
     fun resendCode(isUser: Boolean = true){
@@ -80,6 +188,7 @@ class TGViewModel(
             } catch(it: Exception){
                 val message = it.message ?: "unknown client exception"
                 _apiState.value = ApiState.Error(message)
+                Log.e("TDLib",message)
             }
         }
     }
@@ -97,6 +206,7 @@ class TGViewModel(
             } catch(e: Exception){
                 val message = e.message ?: "unknown client exception"
                 _apiState.value = ApiState.Error(message)
+                Log.e("TDLib",message)
             }
         }
     }
@@ -108,6 +218,7 @@ class TGViewModel(
             } catch(e: Exception){
                 val message = e.message ?: "unknown client exception"
                 _apiState.value = ApiState.Error(message)
+                Log.e("TDLib",message)
             }
         }
     }
@@ -119,6 +230,7 @@ class TGViewModel(
             } catch(e: Exception){
                 val message = e.message ?: "unknown client exception"
                 _apiState.value = ApiState.Error(message)
+                Log.e("TDLib",message)
             }
         }
     }
@@ -134,6 +246,7 @@ class TGViewModel(
             } catch(e: Exception){
                 val message = e.message ?: "unknown client exception"
                 _apiState.value = ApiState.Error(message)
+                Log.e("TDLib",message)
             }
         }
     }
@@ -148,6 +261,7 @@ class TGViewModel(
             } catch(e: Exception){
                 val message = e.message ?: "unknown client exception"
                 _apiState.value = ApiState.Error(message)
+                Log.e("TDLib",message)
             }
         }
     }

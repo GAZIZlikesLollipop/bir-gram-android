@@ -119,4 +119,9 @@
         <item>Retry automatic verification</item>
         <item>Resend code</item>
     </string-array>
+    <string-array name="chats_cnt">
+        <item>Welcome to BirGram</item>
+        <item>Start messaging by tapping pencil button in the bottom right corner.</item>
+        <item>Deleted Account</item>
+    </string-array>
 </resources>

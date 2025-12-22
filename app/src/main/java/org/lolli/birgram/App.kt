@@ -202,7 +202,9 @@ fun App(tgViewModel: TGViewModel) {
                                 modifier = Modifier.fillMaxWidth()
                             )
                         }
+                        currentRoute == Route.Chats.route -> {
 
+                        }
                         else -> {}
                     }
                 },

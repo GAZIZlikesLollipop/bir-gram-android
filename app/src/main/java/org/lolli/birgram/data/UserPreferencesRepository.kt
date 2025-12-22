@@ -23,7 +23,7 @@ class UserPreferencesRepository(val context: Context): UserPreferencesRepo {
     private val dataStore = context.dataStore
 
     override val initialRoute: Flow<String> = dataStore.data.map {
-        it[INITIAL_ROUTE] ?: Route.Auth.route
+        it[INITIAL_ROUTE] ?: Route.Default.route
     }
 
     override suspend fun updateInitialRoute(route: String) {

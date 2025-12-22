@@ -83,12 +83,6 @@ fun AuthScreen(
     val apiState by viewModel.apiState.collectAsState()
     var phoneNumber by rememberSaveable { mutableStateOf("") }
     val focusManager = LocalFocusManager.current
-    val initialRoute by viewModel.initialRoute.collectAsState()
-    LaunchedEffect(Unit){
-        if(initialRoute == Route.Chats.route){
-            viewModel.nextLoginStep(TdApi.AuthorizationStateWaitTdlibParameters(),AuthData.TDLibParameters)
-        }
-    }
     LaunchedEffect(loginState){
         viewModel.addAuthToHistory()
     }
@@ -96,15 +90,15 @@ fun AuthScreen(
         targetState = loginState,
         transitionSpec = {
             if(viewModel.isReverse){
-                slideInHorizontally(tween(500,50),{-it}).togetherWith(shrinkHorizontally(tween(500,50), targetWidth = {it}))
+                slideInHorizontally(tween(500,50)) { -it }.togetherWith(shrinkHorizontally(tween(500,50), targetWidth = {it}))
             } else {
-                slideInHorizontally(tween(500,50),{it}).togetherWith(shrinkHorizontally(tween(500,50), targetWidth = {-it}))
+                slideInHorizontally(tween(500,50)) { it }.togetherWith(shrinkHorizontally(tween(500,50), targetWidth = {-it}))
             }
         }
     ){ authState ->
         Box(modifier = Modifier.fillMaxSize()) {
-            when {
-                authState.javaClass == TdApi.AuthorizationStateWaitTdlibParameters::class.java -> {
+            when (authState) {
+                is TdApi.AuthorizationStateWaitTdlibParameters -> {
                     BackHandler { }
                     Column(
                         modifier = Modifier.fillMaxSize(),
@@ -147,10 +141,8 @@ fun AuthScreen(
                         }
                     }
                 }
-
-                authState.javaClass == TdApi.AuthorizationStateWaitOtherDeviceConfirmation::class.java -> TODO("ЕЩЕ в разработке")
-
-                authState.javaClass == TdApi.AuthorizationStateWaitPhoneNumber::class.java -> {
+                is TdApi.AuthorizationStateWaitOtherDeviceConfirmation -> TODO("ЕЩЕ в разработке")
+                is TdApi.AuthorizationStateWaitPhoneNumber -> {
                     BackHandler { }
                     Box(modifier = Modifier.fillMaxSize()) {
                         BaseAuth(
@@ -175,13 +167,12 @@ fun AuthScreen(
                         )
                     }
                 }
-
-                authState.javaClass == TdApi.AuthorizationStateWaitCode::class.java -> {
+                is TdApi.AuthorizationStateWaitCode -> {
                     BackHandler { }
                     var code by rememberSaveable { mutableStateOf("") }
                     val typeDescriptions = stringArrayResource(R.array.code_type)
 
-                    val codeType = when ((authState as TdApi.AuthorizationStateWaitCode).codeInfo.type) {
+                    val codeType = when (authState.codeInfo.type) {
                         is TdApi.AuthenticationCodeTypeTelegramMessage -> typeDescriptions[0]
                         is TdApi.AuthenticationCodeTypeSms -> typeDescriptions[1]
                         is TdApi.AuthenticationCodeTypeCall -> typeDescriptions[2]
@@ -249,8 +240,7 @@ fun AuthScreen(
                         callText = nextString
                     )
                 }
-
-                authState.javaClass == TdApi.AuthorizationStateWaitPassword::class.java -> {
+                is TdApi.AuthorizationStateWaitPassword -> {
                     BackHandler { }
                     var textFieldState by rememberSaveable { mutableStateOf("") }
                     BaseAuth(
@@ -282,13 +272,13 @@ fun AuthScreen(
                                         focusManager.clearFocus()
                                         viewModel.nextLoginStep(
                                             TdApi.AuthorizationStateWaitPassword(),
-                                            AuthData.Password(textFieldState.toString())
+                                            AuthData.Password(textFieldState)
                                         )
                                     }
                                 ),
                                 placeholder = {
                                     Text(
-                                        (authState as TdApi.AuthorizationStateWaitPassword).passwordHint ?: "Password"
+                                        authState.passwordHint ?: "Password"
                                     )
                                 },
                                 trailingIcon = {
@@ -297,11 +287,11 @@ fun AuthScreen(
                                     ) {
                                         AnimatedVisibility(
                                             visible = textFieldState.length > 5 && apiState !is ApiState.Loading,
-                                            enter = slideInVertically(tween(350, 50), { it }) +
+                                            enter = slideInVertically(tween(350, 50)) { it } +
                                                     expandVertically(
                                                         tween(250, 50),
                                                         initialHeight = { it }),
-                                            exit = slideOutVertically(tween(350, 0), { it }) +
+                                            exit = slideOutVertically(tween(350, 0)) { it } +
                                                     shrinkVertically(
                                                         tween(250, 0),
                                                         targetHeight = { it })
@@ -318,7 +308,8 @@ fun AuthScreen(
                                                 spring(
                                                     dampingRatio = Spring.DampingRatioMediumBouncy,
                                                     stiffness = Spring.StiffnessMediumLow
-                                                ), { it }) + expandHorizontally(
+                                                )
+                                            ) { it } + expandHorizontally(
                                                 spring(
                                                     dampingRatio = Spring.DampingRatioMediumBouncy,
                                                     stiffness = Spring.StiffnessMediumLow
@@ -329,8 +320,7 @@ fun AuthScreen(
                                                     50,
                                                     LinearOutSlowInEasing
                                                 ),
-                                                { it },
-                                            ) + shrinkHorizontally(
+                                            ) { it } + shrinkHorizontally(
                                                 tween(
                                                     500,
                                                     50,
@@ -348,7 +338,7 @@ fun AuthScreen(
                                                     onClick = {
                                                         viewModel.nextLoginStep(
                                                             TdApi.AuthorizationStateWaitPassword(),
-                                                            AuthData.Password(textFieldState.toString())
+                                                            AuthData.Password(textFieldState)
                                                         )
                                                     },
                                                 ) {
@@ -381,8 +371,7 @@ fun AuthScreen(
                         apiState = apiState
                     )
                 }
-
-                authState.javaClass == TdApi.AuthorizationStateWaitEmailAddress::class.java -> {
+                is TdApi.AuthorizationStateWaitEmailAddress -> {
                     BackHandler { }
                     var email by rememberSaveable { mutableStateOf("") }
                     BaseAuth(
@@ -403,13 +392,12 @@ fun AuthScreen(
                         apiState = apiState
                     )
                 }
-
-                authState.javaClass == TdApi.AuthorizationStateWaitEmailCode::class.java -> {
+                is TdApi.AuthorizationStateWaitEmailCode -> {
                     BackHandler { }
                     var code by rememberSaveable { mutableStateOf("") }
                     BaseAuth(
                         title = cnt[29],
-                        description = "${cnt[30]} ${(authState as TdApi.AuthorizationStateWaitEmailCode).codeInfo?.emailAddressPattern}",
+                        description = "${cnt[30]} ${authState.codeInfo?.emailAddressPattern}",
                         textFieldValue = code,
                         onChange = {code = it},
                         labelText = cnt[31],
@@ -444,8 +432,7 @@ fun AuthScreen(
                         }
                     )
                 }
-
-                authState.javaClass == TdApi.AuthorizationStateWaitRegistration::class.java -> {
+                is TdApi.AuthorizationStateWaitRegistration -> {
                     BackHandler { }
                     Column(
                         modifier = Modifier.fillMaxSize().padding(16.dp),
@@ -512,17 +499,13 @@ fun AuthScreen(
                         }
                     }
                 }
-
-                authState.javaClass == TdApi.AuthorizationStateReady::class.java -> {
+                is TdApi.AuthorizationStateReady -> {
                     BackHandler { }
                     navController.navigate(Route.Chats.route)
                 }
-
-                authState.javaClass == TdApi.AuthorizationStateLoggingOut::class.java -> TODO()
-
-                authState.javaClass == TdApi.AuthorizationStateClosing::class.java -> TODO()
-                authState.javaClass == TdApi.AuthorizationStateClosed::class.java -> TODO()
-
+                is TdApi.AuthorizationStateLoggingOut -> TODO()
+                is TdApi.AuthorizationStateClosing -> TODO()
+                is TdApi.AuthorizationStateClosed -> TODO()
                 else -> {
                     Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)){ Text("") }
                 }

@@ -29,7 +29,7 @@ android {
         buildConfigField("String","API_ID",apiId)
         buildConfigField("String","API_HASH",apiHash)
         applicationId = "org.lolli.birgram"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
@@ -51,7 +51,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_21
     }
 }
-
 
 dependencies {
     implementation(libs.androidx.core.ktx)
@@ -77,4 +76,5 @@ dependencies {
     implementation(libs.coil.network.okhttp)
 
     implementation(libs.androidx.datastore.preferences)
+    implementation("com.valentinilk.shimmer:compose-shimmer:1.3.3")
 }

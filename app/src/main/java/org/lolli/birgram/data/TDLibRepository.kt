@@ -32,7 +32,13 @@ sealed class AuthData {
 interface TdLibClient {
     fun initClient(
         onError: (String) -> Unit,
-        onUpdate: (state: TdApi.AuthorizationState) -> Unit
+        onAuth: (state: TdApi.AuthorizationState) -> Unit,
+        onChats: (
+            position: TdApi.UpdateChatPosition?,
+            chat: TdApi.Chat?,
+            lastMessage: TdApi.UpdateChatLastMessage?
+        ) -> Unit,
+        onFile: (file: TdApi.File) -> Unit
     )
 
     fun updateAuthState(
@@ -68,12 +74,22 @@ interface TdLibClient {
         onError: (String) -> Unit
     )
 
-    fun sendMessage()
-    fun getChats(
+    fun loadChats(
         type: TdApi.ChatList,
         limit: Int,
         onError: (String) -> Unit
     )
+
+    fun downloadFile(
+        fileId: Int,
+        priority: Int,
+        offset: Long,
+        limit: Long,
+        synchronous: Boolean,
+        onError: (String) -> Unit
+    )
+
+    fun sendMessage()
 
     fun getChatMessages()
 }
@@ -84,19 +100,35 @@ class TDLibRepository(val context: Context) : TdLibClient {
 
     override fun initClient(
         onError: (String) -> Unit,
-        onUpdate: (state: TdApi.AuthorizationState) -> Unit
+        onAuth: (state: TdApi.AuthorizationState) -> Unit,
+        onChats: (
+            position: TdApi.UpdateChatPosition?,
+            chat: TdApi.Chat?,
+            lastMessage: TdApi.UpdateChatLastMessage?
+        ) -> Unit,
+        onFile: (file: TdApi.File) -> Unit
     ) {
         client = Client.create(
             { authState ->
-                when {
-                    authState.javaClass == TdApi.Error::class.java -> {
-                        val err = authState as TdApi.Error
-                        Log.e("TDLib", "${err.code}: ${err.message}")
-                        onError(err.message)
+                when (authState) {
+                    is TdApi.Error -> {
+                        Log.e("TDLib", "${authState.code}: ${authState.message}")
+                        onError(authState.message)
                     }
-                    authState.javaClass == TdApi.UpdateAuthorizationState::class.java -> {
-                        val update = authState as TdApi.UpdateAuthorizationState
-                        onUpdate(update.authorizationState)
+                    is TdApi.UpdateAuthorizationState -> {
+                        onAuth(authState.authorizationState)
+                    }
+                    is TdApi.UpdateChatPosition -> {
+                        onChats(authState,null,null)
+                    }
+                    is TdApi.UpdateNewChat -> {
+                        onChats(null,authState.chat,null)
+                    }
+                    is TdApi.UpdateChatLastMessage -> {
+                        onChats(null,null,authState)
+                    }
+                    is TdApi.UpdateFile -> {
+                        onFile(authState.file)
                     }
                 }
             },
@@ -261,16 +293,38 @@ class TDLibRepository(val context: Context) : TdLibClient {
         }
     }
 
-    override fun sendMessage() {
-        TODO("Еще в разработке")
-    }
-
-    override fun getChats(type: TdApi.ChatList, limit: Int, onError: (String) -> Unit) {
+    override fun loadChats(
+        type: TdApi.ChatList,
+        limit: Int,
+        onError: (String) -> Unit
+    ) {
         val query = TdApi.LoadChats().apply {
             this.limit = limit
             this.chatList = type
         }
         sendRequest(query, onError)
+    }
+
+    override fun downloadFile(
+        fileId: Int,
+        priority: Int,
+        offset: Long,
+        limit: Long,
+        synchronous: Boolean,
+        onError: (String) -> Unit
+    ) {
+        val query = TdApi.DownloadFile().apply {
+            this.fileId = fileId
+            this.priority = priority
+            this.offset = offset
+            this.limit = limit
+            this.synchronous = synchronous
+        }
+        sendRequest(query,onError)
+    }
+
+    override fun sendMessage() {
+        TODO("Еще в разработке")
     }
 
     override fun getChatMessages() {
