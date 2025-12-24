@@ -36,7 +36,13 @@ interface TdLibClient {
         onChats: (
             position: TdApi.UpdateChatPosition?,
             chat: TdApi.Chat?,
-            lastMessage: TdApi.UpdateChatLastMessage?
+            lastMessage: TdApi.UpdateChatLastMessage?,
+            outbox: TdApi.UpdateChatReadOutbox?,
+            photo: TdApi.UpdateChatPhoto?,
+            title: TdApi.UpdateChatTitle?,
+            mentionCount: TdApi.UpdateChatUnreadMentionCount?,
+            reactionCount: TdApi.UpdateChatUnreadReactionCount?,
+            unreadCount: TdApi.UpdateChatReadInbox?
         ) -> Unit,
         onFile: (file: TdApi.File) -> Unit
     )
@@ -104,7 +110,13 @@ class TDLibRepository(val context: Context) : TdLibClient {
         onChats: (
             position: TdApi.UpdateChatPosition?,
             chat: TdApi.Chat?,
-            lastMessage: TdApi.UpdateChatLastMessage?
+            lastMessage: TdApi.UpdateChatLastMessage?,
+            outbox: TdApi.UpdateChatReadOutbox?,
+            photo: TdApi.UpdateChatPhoto?,
+            title: TdApi.UpdateChatTitle?,
+            mentionCount: TdApi.UpdateChatUnreadMentionCount?,
+            reactionCount: TdApi.UpdateChatUnreadReactionCount?,
+            unreadCount: TdApi.UpdateChatReadInbox?
         ) -> Unit,
         onFile: (file: TdApi.File) -> Unit
     ) {
@@ -118,17 +130,35 @@ class TDLibRepository(val context: Context) : TdLibClient {
                     is TdApi.UpdateAuthorizationState -> {
                         onAuth(authState.authorizationState)
                     }
-                    is TdApi.UpdateChatPosition -> {
-                        onChats(authState,null,null)
-                    }
-                    is TdApi.UpdateNewChat -> {
-                        onChats(null,authState.chat,null)
-                    }
-                    is TdApi.UpdateChatLastMessage -> {
-                        onChats(null,null,authState)
-                    }
                     is TdApi.UpdateFile -> {
                         onFile(authState.file)
+                    }
+                    is TdApi.UpdateChatPosition -> {
+                        onChats(authState,null,null,null,null,null,null,null,null)
+                    }
+                    is TdApi.UpdateNewChat -> {
+                        onChats(null,authState.chat,null,null,null,null,null,null,null)
+                    }
+                    is TdApi.UpdateChatLastMessage -> {
+                        onChats(null,null,authState,null,null,null,null,null,null)
+                    }
+                    is TdApi.UpdateChatReadOutbox -> {
+                        onChats(null,null,null,authState,null,null,null,null,null)
+                    }
+                    is TdApi.UpdateChatPhoto -> {
+                        onChats(null,null,null,null,authState,null,null,null,null)
+                    }
+                    is TdApi.UpdateChatTitle -> {
+                        onChats(null,null,null,null,null,authState,null,null,null)
+                    }
+                    is TdApi.UpdateChatUnreadMentionCount -> {
+                        onChats(null,null,null,null,null,null,authState,null,null)
+                    }
+                    is TdApi.UpdateChatUnreadReactionCount -> {
+                        onChats(null,null,null,null,null,null,null,authState,null)
+                    }
+                    is TdApi.UpdateChatReadInbox -> {
+                        onChats(null,null,null,null,null,null,null,null,authState)
                     }
                 }
             },

@@ -83,6 +83,9 @@ fun AuthScreen(
     val apiState by viewModel.apiState.collectAsState()
     var phoneNumber by rememberSaveable { mutableStateOf("") }
     val focusManager = LocalFocusManager.current
+    LaunchedEffect(Unit){
+        viewModel.nextLoginStep(TdApi.AuthorizationStateWaitTdlibParameters(), AuthData.TDLibParameters)
+    }
     LaunchedEffect(loginState){
         viewModel.addAuthToHistory()
     }
@@ -100,71 +103,90 @@ fun AuthScreen(
             when (authState) {
                 is TdApi.AuthorizationStateWaitTdlibParameters -> {
                     BackHandler { }
-                    Column(
-                        modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.background)
                     ) {
-                        Image(
-                            painter = painterResource(R.drawable.app_launcher),
-                            contentDescription = stringResource(R.string.app_name),
-                            modifier = Modifier.size(175.dp),
-                        )
-                        Spacer(Modifier.height(8.dp))
-                        Text(
-                            text = stringResource(R.string.app_name),
-                            modifier = Modifier.fillMaxWidth(),
-                            style = MaterialTheme.typography.headlineLarge,
-                            color = MaterialTheme.colorScheme.onBackground,
-                            textAlign = TextAlign.Center
-                        )
-                        Spacer(Modifier.height(8.dp))
-                        Text(
-                            text = cnt[0],
-                            textAlign = TextAlign.Center,
-                            style = MaterialTheme.typography.bodyLarge,
-                            modifier = Modifier.fillMaxWidth(),
-                            color = MaterialTheme.colorScheme.onBackground.copy(0.5f)
-                        )
-                        Spacer(Modifier.height(60.dp))
-                        Button(
-                            onClick = {
-                                viewModel.nextLoginStep(TdApi.AuthorizationStateWaitTdlibParameters(),AuthData.TDLibParameters)
-                            },
-                            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
-                            enabled = apiState is ApiState.Init || apiState is ApiState.Error
-                        ) {
-                            Text(
-                                text = cnt[1],
-                                style = MaterialTheme.typography.bodyLarge
-                            )
-                        }
+                        Text("")
                     }
                 }
                 is TdApi.AuthorizationStateWaitOtherDeviceConfirmation -> TODO("ЕЩЕ в разработке")
                 is TdApi.AuthorizationStateWaitPhoneNumber -> {
                     BackHandler { }
-                    Box(modifier = Modifier.fillMaxSize()) {
-                        BaseAuth(
-                            title = cnt[3],
-                            description = cnt[5],
-                            customTextField = null,
-                            textFieldValue = phoneNumber,
-                            onChange = { phoneNumber = it },
-                            labelText = cnt[4],
-                            onNext = {
-                                focusManager.clearFocus()
-                                viewModel.isPhoneNumber = Pair(true,phoneNumber)
-                            },
-                            isVisible = phoneNumber.length > 9,
-                            apiState = apiState,
-                            leftContent = {
-                                Text(
-                                    "+",
-                                    color = MaterialTheme.colorScheme.onBackground
+                    AnimatedContent(
+                        targetState = viewModel.isNumber,
+                        transitionSpec = {
+                            if(!viewModel.isNumber){
+                                slideInHorizontally(tween(500,50)) { -it }.togetherWith(shrinkHorizontally(tween(500,50), targetWidth = {it}))
+                            } else {
+                                slideInHorizontally(tween(500,50)) { it }.togetherWith(shrinkHorizontally(tween(500,50), targetWidth = {-it}))
+                            }
+                        }
+                    ) { state ->
+                        if(state){
+                            Box(modifier = Modifier.fillMaxSize()) {
+                                BaseAuth(
+                                    title = cnt[3],
+                                    description = cnt[5],
+                                    customTextField = null,
+                                    textFieldValue = phoneNumber,
+                                    onChange = { phoneNumber = it },
+                                    labelText = cnt[4],
+                                    onNext = {
+                                        focusManager.clearFocus()
+                                        viewModel.isPhoneNumber = Pair(true,phoneNumber)
+                                    },
+                                    isVisible = phoneNumber.length > 9,
+                                    apiState = apiState,
+                                    leftContent = {
+                                        Text(
+                                            "+",
+                                            color = MaterialTheme.colorScheme.onBackground
+                                        )
+                                    }
                                 )
                             }
-                        )
+                        } else {
+                            Column(
+                                modifier = Modifier.fillMaxSize(),
+                                verticalArrangement = Arrangement.Center,
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Image(
+                                    painter = painterResource(R.drawable.app_launcher),
+                                    contentDescription = stringResource(R.string.app_name),
+                                    modifier = Modifier.size(175.dp),
+                                )
+                                Spacer(Modifier.height(8.dp))
+                                Text(
+                                    text = stringResource(R.string.app_name),
+                                    modifier = Modifier.fillMaxWidth(),
+                                    style = MaterialTheme.typography.headlineLarge,
+                                    color = MaterialTheme.colorScheme.onBackground,
+                                    textAlign = TextAlign.Center
+                                )
+                                Spacer(Modifier.height(8.dp))
+                                Text(
+                                    text = cnt[0],
+                                    textAlign = TextAlign.Center,
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    color = MaterialTheme.colorScheme.onBackground.copy(0.5f)
+                                )
+                                Spacer(Modifier.height(60.dp))
+                                Button(
+                                    onClick = { viewModel.isNumber = true },
+                                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp),
+                                    enabled = apiState is ApiState.Init || apiState is ApiState.Error
+                                ) {
+                                    Text(
+                                        text = cnt[1],
+                                        style = MaterialTheme.typography.bodyLarge
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
                 is TdApi.AuthorizationStateWaitCode -> {

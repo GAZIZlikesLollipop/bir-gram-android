@@ -105,7 +105,7 @@ fun birGramFontFamily() = FontFamily(
 @Composable
 fun BirGramTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    content: @Composable() () -> Unit
+    content: @Composable () -> Unit
 ) {
     val baseline = Typography()
     val typography = Typography(

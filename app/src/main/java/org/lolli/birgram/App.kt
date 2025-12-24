@@ -19,14 +19,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -54,7 +52,8 @@ import androidx.navigation.compose.rememberNavController
 import org.drinkless.tdlib.TdApi
 import org.lolli.birgram.data.AuthData
 import org.lolli.birgram.presentation.TGViewModel
-import org.lolli.birgram.presentation.theme.BirGramTheme
+import org.lolli.birgram.presentation.components.AuthTopBar
+import org.lolli.birgram.presentation.components.ChatsTopBar
 
 @Composable
 fun BackArrow(
@@ -154,178 +153,143 @@ fun Dialog(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun App(tgViewModel: TGViewModel) {
     val navController = rememberNavController()
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = currentBackStackEntry?.destination?.route
     val loginState by tgViewModel.loginState.collectAsState()
-    val authHistory by tgViewModel.authHistory.collectAsState()
     val cnt = stringArrayResource(R.array.login_cnt)
-    BirGramTheme {
-        Box(Modifier.fillMaxSize()) {
-            Scaffold(
-                topBar = {
-                    when {
-                        currentRoute == Route.Auth.route || currentRoute == Route.PasswordRecovery.route -> {
-                            TopAppBar(
-                                title = {},
-                                navigationIcon = {
-                                    if(currentRoute == Route.PasswordRecovery.route){
-                                        BackArrow { navController.navigate(Route.Auth.route) }
-                                    }
-                                    if(authHistory.size > 1 && currentRoute != Route.PasswordRecovery.route){
-                                        if (
-                                            loginState.javaClass != TdApi.AuthorizationStateWaitPhoneNumber::class.java &&
-                                            loginState.javaClass != TdApi.AuthorizationStateWaitRegistration::class.java &&
-                                            authHistory[authHistory.lastIndex-1] !is TdApi.AuthorizationStateWaitTdlibParameters
-                                        ) {
-                                            BackArrow { tgViewModel.previousAuthHistory() }
-                                        }
-                                    }
-                                },
-                                actions = {
-                                    if (loginState.javaClass == TdApi.AuthorizationStateWaitTdlibParameters::class.java) {
-                                        IconButton(
-                                            onClick = {}
-                                        ) {
-                                            Icon(
-                                                imageVector = ImageVector.vectorResource(R.drawable.ar_sticker),
-                                                contentDescription = "",
-                                                tint = MaterialTheme.colorScheme.primary,
-                                                modifier = Modifier.size(32.dp)
-                                            )
-                                        }
-                                    }
-                                },
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                        }
-                        currentRoute == Route.Chats.route -> {
-
-                        }
-                        else -> {}
+    Box(Modifier.fillMaxSize()) {
+        Scaffold(
+            topBar = {
+                when (currentRoute) {
+                    Route.Auth.route, Route.PasswordRecovery.route -> {
+                        AuthTopBar(navController, tgViewModel)
                     }
-                },
-                bottomBar = {
-                    when(currentRoute){
-                        Route.Auth.route -> {
-                            if(loginState.javaClass == TdApi.AuthorizationStateWaitRegistration::class.java){
-                                Row(
-                                    modifier = Modifier.fillMaxWidth().padding(16.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
+                    Route.Chats.route -> {
+                        ChatsTopBar()
+                    }
+                    else -> {}
+                }
+            },
+            bottomBar = {
+                when(currentRoute){
+                    Route.Auth.route -> {
+                        if(loginState.javaClass == TdApi.AuthorizationStateWaitRegistration::class.java){
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ){
+                                Text(
+                                    text = buildAnnotatedString {
+                                        append(cnt[46])
+                                        withLink(
+                                            LinkAnnotation.Clickable(
+                                                tag = "FUCKER",
+                                                styles = TextLinkStyles(SpanStyle(MaterialTheme.colorScheme.primary)),
+                                                linkInteractionListener = {tgViewModel.isTerms = true}
+                                            )
+                                        ){
+                                            append(cnt[47])
+                                        }
+                                    },
+                                )
+                                Button(
+                                    onClick = { tgViewModel.nextLoginStep(
+                                        TdApi.AuthorizationStateWaitRegistration(),
+                                        AuthData.Registration(tgViewModel.firstName,tgViewModel.lastName,false)
+                                    ) },
+                                    contentPadding = PaddingValues(0.dp),
+                                    shape = CircleShape
                                 ){
-                                    Text(
-                                        text = buildAnnotatedString {
-                                            append(cnt[46])
-                                            withLink(
-                                                LinkAnnotation.Clickable(
-                                                    tag = "FUCKER",
-                                                    styles = TextLinkStyles(SpanStyle(MaterialTheme.colorScheme.primary)),
-                                                    linkInteractionListener = {tgViewModel.isTerms = true}
-                                                )
-                                            ){
-                                                append(cnt[47])
-                                            }
-                                        },
+                                    Icon(
+                                        imageVector = ImageVector.vectorResource(R.drawable.arrow_back),
+                                        contentDescription = null,
+                                        modifier = Modifier.scale(scaleX = -1f,scaleY=1f),
+                                        tint = MaterialTheme.colorScheme.onBackground
                                     )
-                                    Button(
-                                        onClick = { tgViewModel.nextLoginStep(
-                                            TdApi.AuthorizationStateWaitRegistration(),
-                                            AuthData.Registration(tgViewModel.firstName,tgViewModel.lastName,false)
-                                        ) },
-                                        contentPadding = PaddingValues(0.dp),
-                                        shape = CircleShape
-                                    ){
-                                        Icon(
-                                            imageVector = ImageVector.vectorResource(R.drawable.arrow_back),
-                                            contentDescription = null,
-                                            modifier = Modifier.scale(scaleX = -1f,scaleY=1f),
-                                            tint = MaterialTheme.colorScheme.onBackground
-                                        )
-                                    }
                                 }
                             }
                         }
-                        else -> {}
                     }
-                },
-                modifier = Modifier.fillMaxSize()
-            ) { paddingValues ->
-                Navigation(navController, tgViewModel,paddingValues)
-            }
-            if(loginState.javaClass == TdApi.AuthorizationStateWaitEmailCode::class.java){
-                Dialog(
-                    isActive = tgViewModel.isAvailableRecovery != null,
-                    title = cnt[39],
-                    description = cnt[40],
-                    descriptionColor = MaterialTheme.colorScheme.onBackground,
-                    cancel = "OK",
-                    onCancel = { tgViewModel.isAvailableRecovery = null },
-                )
-                Dialog(
-                    isActive = tgViewModel.isPendingRecovery != null,
-                    title = cnt[33],
-                    description = "${cnt[34]} ${(loginState as TdApi.AuthorizationStateWaitEmailCode).codeInfo?.emailAddressPattern}${cnt[35]}",
-                    cancel = cnt[20],
-                    next = cnt[36],
-                    onCancel = { tgViewModel.isPendingRecovery = null },
-                    onNext = {
-                        tgViewModel.resetEmail()
-                        tgViewModel.isPendingRecovery = null
-                    }
-                )
-            }
-            if(tgViewModel.isAccountDelete){
-                var isSecond by rememberSaveable{mutableStateOf(false)}
-                Dialog(
-                    isActive = !isSecond,
-                    title = cnt[17],
-                    description = cnt[18],
-                    cancel = cnt[20],
-                    next = cnt[19],
-                    onCancel = { tgViewModel.isAccountDelete = false },
-                    onNext = { isSecond = true }
-                )
-                Dialog(
-                    isActive = isSecond,
-                    title = cnt[21],
-                    description = cnt[22],
-                    cancel = cnt[20],
-                    next = cnt[19],
-                    onCancel = { tgViewModel.isAccountDelete = false },
-                    onNext = {
-                        tgViewModel.isAccountDelete = false
-                        tgViewModel.previousAuthHistory()
-                        tgViewModel.deleteAccount()
-                    }
-                )
-            }
-            if(loginState.javaClass == TdApi.AuthorizationStateWaitRegistration::class.java){
-                Dialog(
-                    isActive = tgViewModel.isTerms,
-                    title = cnt[48],
-                    description = (loginState as TdApi.AuthorizationStateWaitRegistration).termsOfService?.text?.text ?: "",
-                    descriptionColor = MaterialTheme.colorScheme.onBackground,
-                    cancel = "OK",
-                    onCancel = {tgViewModel.isTerms = false},
-                )
-            }
+                    else -> {}
+                }
+            },
+            modifier = Modifier.fillMaxSize()
+        ) { paddingValues ->
+            Navigation(navController, tgViewModel,paddingValues)
+        }
+        if(loginState.javaClass == TdApi.AuthorizationStateWaitEmailCode::class.java){
             Dialog(
-                isActive = tgViewModel.isPhoneNumber.first,
-                title = cnt[6],
-                description = "+${tgViewModel.isPhoneNumber.second}",
-                descriptionStyle = MaterialTheme.typography.bodyLarge,
-                cancel = cnt[7],
-                next = cnt[8],
-                onCancel = {tgViewModel.isPhoneNumber = Pair(false,"")},
+                isActive = tgViewModel.isAvailableRecovery != null,
+                title = cnt[39],
+                description = cnt[40],
+                descriptionColor = MaterialTheme.colorScheme.onBackground,
+                cancel = "OK",
+                onCancel = { tgViewModel.isAvailableRecovery = null },
+            )
+            Dialog(
+                isActive = tgViewModel.isPendingRecovery != null,
+                title = cnt[33],
+                description = "${cnt[34]} ${(loginState as TdApi.AuthorizationStateWaitEmailCode).codeInfo?.emailAddressPattern}${cnt[35]}",
+                cancel = cnt[20],
+                next = cnt[36],
+                onCancel = { tgViewModel.isPendingRecovery = null },
                 onNext = {
-                    tgViewModel.nextLoginStep(TdApi.AuthorizationStateWaitPhoneNumber(),AuthData.PhoneNumber(tgViewModel.isPhoneNumber.second))
-                    tgViewModel.isPhoneNumber = Pair(false,"")
+                    tgViewModel.resetEmail()
+                    tgViewModel.isPendingRecovery = null
                 }
             )
         }
+        if(tgViewModel.isAccountDelete){
+            var isSecond by rememberSaveable{mutableStateOf(false)}
+            Dialog(
+                isActive = !isSecond,
+                title = cnt[17],
+                description = cnt[18],
+                cancel = cnt[20],
+                next = cnt[19],
+                onCancel = { tgViewModel.isAccountDelete = false },
+                onNext = { isSecond = true }
+            )
+            Dialog(
+                isActive = isSecond,
+                title = cnt[21],
+                description = cnt[22],
+                cancel = cnt[20],
+                next = cnt[19],
+                onCancel = { tgViewModel.isAccountDelete = false },
+                onNext = {
+                    tgViewModel.isAccountDelete = false
+                    tgViewModel.previousAuthHistory()
+                    tgViewModel.deleteAccount()
+                }
+            )
+        }
+        if(loginState.javaClass == TdApi.AuthorizationStateWaitRegistration::class.java){
+            Dialog(
+                isActive = tgViewModel.isTerms,
+                title = cnt[48],
+                description = (loginState as TdApi.AuthorizationStateWaitRegistration).termsOfService?.text?.text ?: "",
+                descriptionColor = MaterialTheme.colorScheme.onBackground,
+                cancel = "OK",
+                onCancel = {tgViewModel.isTerms = false},
+            )
+        }
+        Dialog(
+            isActive = tgViewModel.isPhoneNumber.first,
+            title = cnt[6],
+            description = "+${tgViewModel.isPhoneNumber.second}",
+            descriptionStyle = MaterialTheme.typography.bodyLarge,
+            cancel = cnt[7],
+            next = cnt[8],
+            onCancel = {tgViewModel.isPhoneNumber = Pair(false,"")},
+            onNext = {
+                tgViewModel.nextLoginStep(TdApi.AuthorizationStateWaitPhoneNumber(),AuthData.PhoneNumber(tgViewModel.isPhoneNumber.second))
+                tgViewModel.isPhoneNumber = Pair(false,"")
+            }
+        )
     }
 }
