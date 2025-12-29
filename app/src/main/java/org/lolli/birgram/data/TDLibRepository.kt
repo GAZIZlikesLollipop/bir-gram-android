@@ -44,7 +44,9 @@ interface TdLibClient {
             reactionCount: TdApi.UpdateChatUnreadReactionCount?,
             unreadCount: TdApi.UpdateChatReadInbox?
         ) -> Unit,
-        onFile: (file: TdApi.File) -> Unit
+        onFile: (file: TdApi.File) -> Unit,
+        onChatFolders: (folders: TdApi.UpdateChatFolders) -> Unit,
+        onUnreadChatCount: (unreadCount: TdApi.UpdateUnreadChatCount) -> Unit
     )
 
     fun updateAuthState(
@@ -118,7 +120,9 @@ class TDLibRepository(val context: Context) : TdLibClient {
             reactionCount: TdApi.UpdateChatUnreadReactionCount?,
             unreadCount: TdApi.UpdateChatReadInbox?
         ) -> Unit,
-        onFile: (file: TdApi.File) -> Unit
+        onFile: (file: TdApi.File) -> Unit,
+        onChatFolders: (folders: TdApi.UpdateChatFolders) -> Unit,
+        onUnreadChatCount: (unreadCount: TdApi.UpdateUnreadChatCount) -> Unit
     ) {
         client = Client.create(
             { authState ->
@@ -159,6 +163,12 @@ class TDLibRepository(val context: Context) : TdLibClient {
                     }
                     is TdApi.UpdateChatReadInbox -> {
                         onChats(null,null,null,null,null,null,null,null,authState)
+                    }
+                    is TdApi.UpdateChatFolders -> {
+                        onChatFolders(authState)
+                    }
+                    is TdApi.UpdateUnreadChatCount -> {
+                        onUnreadChatCount(authState)
                     }
                 }
             },

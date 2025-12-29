@@ -123,5 +123,23 @@
         <item>Welcome to BirGram</item>
         <item>Start messaging by tapping pencil button in the bottom right corner.</item>
         <item>Deleted Account</item>
+        <!--3-->
+        <item>Outgoing</item>
+        <item>Incoming</item>
+        <item>secs</item>
+        <item>Photo</item>
+        <item>Video</item>
+        <item>Voice</item>
+        <item>message</item>
+        <item>Sticker</item>
+        <item>unknown msg</item>
+        <!--12-->
+        <item>call</item>
+        <item>Declined</item>
+        <item>Missed</item>
+        <item>HungUp</item>
+        <item>Disconnected</item>
+        <item>Empty</item>
+        <item>call link</item>
     </string-array>
 </resources>

@@ -168,7 +168,7 @@ fun App(tgViewModel: TGViewModel) {
                         AuthTopBar(navController, tgViewModel)
                     }
                     Route.Chats.route -> {
-                        ChatsTopBar()
+                        ChatsTopBar(tgViewModel)
                     }
                     else -> {}
                 }

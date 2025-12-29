@@ -2,6 +2,7 @@ package org.lolli.birgram.presentation
 
 import android.util.Log
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
@@ -29,6 +30,13 @@ sealed class DownloadType {
     data class ChatPhoto(val chatKey: Long): DownloadType()
 }
 
+sealed class Direction {
+    object Right: Direction()
+    object Left: Direction()
+    object Up: Direction()
+    object Down: Direction()
+}
+
 class TGViewModel(
     val userPreferencesRepository: UserPreferencesRepository,
     val tdLibRepository: TDLibRepository
@@ -54,6 +62,18 @@ class TGViewModel(
 
     private val _chats = MutableStateFlow<Map<Long, TdApi.Chat>>(emptyMap())
     val chats = _chats.asStateFlow()
+
+    val folderChats = mutableStateMapOf<Int,Map<Long,TdApi.Chat>>()
+    val archiveChats = mutableStateMapOf<Long,TdApi.Chat>()
+
+    private val _folders = MutableStateFlow<List<TdApi.ChatFolderInfo>>(emptyList())
+    val folders = _folders.asStateFlow()
+
+    private val _unreadChatCounts = MutableStateFlow<Map<TdApi.ChatList,Int>>(emptyMap())
+    val unreadChatCounts = _unreadChatCounts.asStateFlow()
+
+    var targetChatList by mutableStateOf<TdApi.ChatList>(TdApi.ChatListMain())
+    var animationDirection by mutableStateOf<Direction>(Direction.Right)
 
     private val _chatsPhotos = MutableStateFlow<Map<Long,Any?>>(emptyMap())
     val chatsPhotos = _chatsPhotos.asStateFlow()
@@ -98,6 +118,7 @@ class TGViewModel(
                         _chatsPhotos.update { map ->
                             map + (chat.id to chatPhoto)
                         }
+
                         _chats.update { map ->
                             map + (chat.id to chat)
                         }
@@ -337,6 +358,32 @@ class TGViewModel(
                             }
                         }
                     }
+                }
+            },
+            { folders ->
+                val list =
+                    listOf(
+                        TdApi.ChatFolderInfo().apply {
+                            name = TdApi.ChatFolderName().apply {
+                                this.text = TdApi.FormattedText().apply {
+                                    this.text = "All"
+                                }
+                            }
+                            icon = TdApi.ChatFolderIcon().apply {
+                                this.name = "All"
+                            }
+                        }
+                    )
+                _folders.update {
+                    emptyList()
+                }
+                _folders.update {
+                    list + folders.chatFolders.toList()
+                }
+            },
+            { unread ->
+                _unreadChatCounts.update {
+                    it + (unread.chatList to unread.unreadCount)
                 }
             }
         )
